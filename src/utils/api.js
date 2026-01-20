@@ -48,10 +48,11 @@ export async function userSignup(userData) {
 export async function sendEmailCode(email) {
   const payload = {
     email: email,
-    // 移除 send_time 字段，由后端服务器自动生成当前时间
+    // send_time 是可选的，可以不传或传当前时间
+    send_time: new Date().toISOString()
   }
   
-  return api.post('/emailrequest', payload)
+  return api.post('/emailsmtprequest', payload)
 }
 
 // 获取当前用户信息
