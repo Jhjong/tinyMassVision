@@ -402,7 +402,7 @@ const register = async () => {
       throw new Error(response.data?.message || 'Registration failed')
     }
   } catch (error) {
-  console.error('Registration failed:', error)
+  console.error('注册失败:', error)
   
   // 增强的错误处理逻辑
   let displayMessage = 'Registration failed, please check your information and try again'
@@ -427,6 +427,7 @@ const register = async () => {
   }
   
   showToast(displayMessage, 'error')
+  }
 }
 
 // 监听密码变化，实时验证确认密码
