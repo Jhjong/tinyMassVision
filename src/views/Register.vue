@@ -113,7 +113,7 @@
             :disabled="!isFormValid || loading.register"
           >
             <span v-if="loading.register" class="loading loading-spinner loading-sm"></span>
-            <span v-else>Register</span>
+            <span v-else>Sign Up</span>
           </button>
         </div>
 
@@ -402,23 +402,31 @@ const register = async () => {
       throw new Error(response.data?.message || 'Registration failed')
     }
   } catch (error) {
-    console.error('Registration failed:', error)
-    
-    // 更详细的错误处理
-    const errorMsg = error.response?.data?.detail || 
-                     error.response?.data?.message || 
-                     'Registration failed, please check your information and try again'
-    
-    // 如果是字段错误，格式化显示
-    if (Array.isArray(errorMsg)) {
-      const fieldErrors = errorMsg.map(err => err.msg).join('; ')
-      showToast(`Registration failed: ${fieldErrors}`, 'error')
-    } else {
-      showToast(`Registration failed: ${errorMsg}`, 'error')
+  console.error('Registration failed:', error)
+  
+  // 增强的错误处理逻辑
+  let displayMessage = 'Registration failed, please check your information and try again'
+  
+  const errorDetail = error.response?.data?.detail
+  
+  if (Array.isArray(errorDetail)) {
+    // 安全地提取消息：确保元素是对象，并有 msg 或 message 属性
+    const messages = errorDetail
+      .map(err => err?.msg ?? err?.message) // 尝试多种可能的字段名
+      .filter(msg => msg != null) // 过滤掉 undefined 或 null
+      
+    if (messages.length > 0) {
+      displayMessage = `Registration failed: ${messages.join('; ')}`
     }
-  } finally {
-    loading.register = false
+  } else if (typeof errorDetail === 'string') {
+    // 如果 detail 是字符串
+    displayMessage = `Registration failed: ${errorDetail}`
+  } else if (error.response?.data?.message) {
+    // 检查其他常见错误字段
+    displayMessage = `Registration failed: ${error.response.data.message}`
   }
+  
+  showToast(displayMessage, 'error')
 }
 
 // 监听密码变化，实时验证确认密码

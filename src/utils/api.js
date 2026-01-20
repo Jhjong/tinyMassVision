@@ -38,8 +38,7 @@ export async function userSignup(userData) {
     email: userData.email,
     password: userData.password,
     verify_code: userData.vericode,
-    active: true,
-    identity: null               // 默认身份
+    // 移除 active 字段，交由后端根据业务逻辑（如邮箱验证）设置
   }
   
   return api.post('/user_signup', payload)
@@ -49,8 +48,7 @@ export async function userSignup(userData) {
 export async function sendEmailCode(email) {
   const payload = {
     email: email,
-    // send_time 是可选的，可以不传或传当前时间
-    send_time: new Date().toISOString()
+    // 移除 send_time 字段，由后端服务器自动生成当前时间
   }
   
   return api.post('/emailrequest', payload)
