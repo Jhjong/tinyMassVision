@@ -3,99 +3,46 @@
     <div class="card w-full max-w-sm items-center justify-center">
       <div class="card w-full h-full items-center justify-center p-8">
         <!-- 用户名输入 -->
-        <AuthInput
-          v-model="form.username"
-          icon-type="user"
-          type="text"
-          required
-          placeholder="username"
-          :pattern="patterns.username"
-          :min-length="3"
-          :max-length="30"
-          title="Only letters, numbers or dash"
-          @blur="validateField('username')"
-        />
+        <AuthInput v-model="form.username" icon-type="user" type="text" required placeholder="username"
+          :pattern="patterns.username" :min-length="3" :max-length="30" title="Only letters, numbers or dash"
+          @blur="validateField('username')" />
         <p v-if="errors.username" class="validator-hint text-error text-sm mt-1">{{ errors.username }}</p>
         <p v-else class="validator-hint text-sm mt-1">3-30 characters, letters, numbers, or hyphens</p>
 
         <!-- 邮箱输入 -->
-        <AuthInput
-          v-model="form.email"
-          icon-type="email"
-          type="email"
-          required
-          placeholder="email"
-          :pattern="patterns.email"
-          :min-length="3"
-          :max-length="50"
-          @blur="validateField('email')"
-          @input="clearError('email')"
-        />
+        <AuthInput v-model="form.email" icon-type="email" type="email" required placeholder="email"
+          :pattern="patterns.email" :min-length="3" :max-length="50" @blur="validateField('email')"
+          @input="clearError('email')" />
         <p v-if="errors.email" class="validator-hint text-error text-sm mt-1">{{ errors.email }}</p>
         <p v-else class="validator-hint text-sm mt-1">Please enter a valid email address</p>
 
         <!-- 密码输入 -->
-        <AuthInput
-          v-model="form.password"
-          icon-type="password"
-          type="password"
-          required
-          placeholder="password"
-          :min-length="8"
-          :max-length="30"
-          @input="validatePasswordStrength"
-          @blur="validateField('password')"
-        />
+        <AuthInput v-model="form.password" icon-type="password" type="password" required placeholder="password"
+          :min-length="8" :max-length="30" @input="validatePasswordStrength" @blur="validateField('password')" />
         <div class="w-full mt-2">
           <div class="flex justify-between items-center mb-1">
             <span class="text-xs">Password strength</span>
             <span class="text-xs font-medium" :class="strengthClass">{{ strengthText }}</span>
           </div>
-          <progress 
-            class="progress w-full h-2" 
-            :class="progressBarClass"
-            :value="passwordScore" 
-            max="5"
-          ></progress>
+          <progress class="progress w-full h-2" :class="progressBarClass" :value="passwordScore" max="5"></progress>
           <p v-if="errors.password" class="validator-hint text-error text-sm mt-1">{{ errors.password }}</p>
           <p v-else class="validator-hint text-sm mt-1">Minimum 8 characters, must include letters and numbers</p>
         </div>
 
         <!-- 确认密码 -->
-        <AuthInput
-          v-model="form.confirmPassword"
-          icon-type="password"
-          type="password"
-          required
-          placeholder="confirm password"
-          :min-length="8"
-          :max-length="30"
-          @blur="validateField('confirmPassword')"
-          @input="clearError('confirmPassword')"
-        />
+        <AuthInput v-model="form.confirmPassword" icon-type="password" type="password" required
+          placeholder="confirm password" :min-length="8" :max-length="30" @blur="validateField('confirmPassword')"
+          @input="clearError('confirmPassword')" />
         <p v-if="errors.confirmPassword" class="validator-hint text-error text-sm mt-1">{{ errors.confirmPassword }}</p>
 
         <!-- 验证码 -->
         <div class="flex gap-2 mt-4">
-          <AuthInput
-            v-model="form.vericode"
-            icon-type="vericode"
-            type="text"
-            required
-            placeholder="verification code"
-            pattern="[0-9]*"
-            :min-length="6"
-            :max-length="6"
-            class="flex-1"
-            @blur="validateField('vericode')"
-          />
+          <AuthInput v-model="form.vericode" icon-type="vericode" type="text" required placeholder="verification code"
+            pattern="[0-9]*" :min-length="6" :max-length="6" class="flex-1" @blur="validateField('vericode')" />
           <div class="form-control">
-            <button 
-              @click="sendVerificationCode" 
-              class="btn btn-secondary"
+            <button @click="sendVerificationCode" class="btn btn-secondary"
               :disabled="isCountdownActive || loading.sendCode"
-              :class="{ 'btn-disabled': isCountdownActive || loading.sendCode }"
-            >
+              :class="{ 'btn-disabled': isCountdownActive || loading.sendCode }">
               <span v-if="loading.sendCode" class="loading loading-spinner loading-xs"></span>
               <span v-else-if="isCountdownActive">Retry in {{ countdown }} seconds</span>
               <span v-else>Send verification code</span>
@@ -107,11 +54,7 @@
 
         <!-- 注册按钮 -->
         <div class="form-control w-full mt-6">
-          <button 
-            class="btn btn-primary w-full" 
-            @click="register"
-            :disabled="!isFormValid || loading.register"
-          >
+          <button class="btn btn-primary w-full" @click="register" :disabled="!isFormValid || loading.register">
             <span v-if="loading.register" class="loading loading-spinner loading-sm"></span>
             <span v-else>Sign Up</span>
           </button>
@@ -137,11 +80,11 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import AuthInput from '../components/AuthInput.vue'
-import { userSignup, sendEmailCode } from '@/utils/api'
+import { usrSignup, sendEmailCode } from '@/utils/usr-api'
 
 const router = useRouter()
 
@@ -219,7 +162,7 @@ const isFormValid = computed(() => {
 })
 
 // 字段验证函数
-const validateField = (field) => {
+const validateField = (field: keyof typeof errors) => {
   switch (field) {
     case 'username':
       if (!form.username) {
@@ -276,7 +219,7 @@ const validateField = (field) => {
 }
 
 // 清除错误
-const clearError = (field) => {
+const clearError = (field: keyof typeof errors) => {
   errors[field] = ''
 }
 
@@ -284,35 +227,33 @@ const clearError = (field) => {
 const validatePasswordStrength = () => {
   let score = 0
   const password = form.password
-  
+
   if (!password) {
     passwordScore.value = 0
     return
   }
-  
+
   // 长度得分
   if (password.length >= 8) score++
   if (password.length >= 12) score++
-  
+
   // 字符类型得分
   if (/[a-z]/.test(password)) score++
   if (/[A-Z]/.test(password)) score++
   if (/[0-9]/.test(password)) score++
   if (/[^a-zA-Z0-9]/.test(password)) score++
-  
+
   // 限制最高分
   passwordScore.value = Math.min(score, 5)
 }
 
 // 显示Toast
-const showToast = (message, type = 'success') => {
+const showToast = (message: string, type = 'success') => {
   toast.message = message
   toast.type = type
   toast.show = true
-  
-  setTimeout(() => {
-    toast.show = false
-  }, 3000)
+
+  setTimeout(() => { toast.show = false }, 3000)
 }
 
 // 发送验证码
@@ -324,11 +265,11 @@ const sendVerificationCode = async () => {
   }
 
   loading.sendCode = true
-  
+
   try {
     // 调用接口
     const response = await sendEmailCode(form.email)
-    
+
     if (response.status === 200) {
       showToast('Verification code has been sent to your email', 'success')
       startCountdown()
@@ -336,8 +277,13 @@ const sendVerificationCode = async () => {
       throw new Error(response.data?.message || 'Failed to send verification code')
     }
   } catch (error) {
-    console.error('Failed to send verification code:', error)
-    showToast(error.response?.data?.message || 'Failed to send verification code, please try again', 'error')
+    if (error instanceof Error) {
+      console.error('Failed to send verification code:', error)
+      showToast(error.response?.data?.message || 'Failed to send verification code, please try again', 'error')
+    } else {
+      console.error('Unknown error:', error)
+      showToast('An unknown error occurred, please try again', 'error')
+    }
   } finally {
     loading.sendCode = false
   }
@@ -347,7 +293,7 @@ const sendVerificationCode = async () => {
 const startCountdown = () => {
   isCountdownActive.value = true
   countdown.value = 60
-  
+
   const timer = setInterval(() => {
     countdown.value--
     if (countdown.value <= 0) {
@@ -364,36 +310,36 @@ const register = async () => {
   Object.keys(form).forEach(key => {
     if (key in errors) validateField(key)
   })
-  
+
   // 检查是否有错误
   const hasErrors = Object.values(errors).some(error => error)
   if (hasErrors) {
     showToast('Please fix errors in the form', 'error')
     return
   }
-  
+
   // 检查密码一致性
   if (form.password !== form.confirmPassword) {
     showToast('Passwords do not match', 'error')
     return
   }
-  
+
   loading.register = true
-  
+
   try {
     const passwordToSend = form.password
-    
+
     // 调用注册接口
-    const response = await userSignup({
+    const response = await usrSignup({
       username: form.username,
       email: form.email,
       password: passwordToSend,
       vericode: form.vericode
     })
-    
+
     if (response.status === 200 || response.status === 201) {
       showToast('Registration successful! Redirecting to login page...', 'success')
-      
+
       // 2秒后跳转到登录页
       setTimeout(() => {
         router.replace('/login')
@@ -402,31 +348,31 @@ const register = async () => {
       throw new Error(response.data?.message || 'Registration failed')
     }
   } catch (error) {
-  console.error('注册失败:', error)
-  
-  // 增强的错误处理逻辑
-  let displayMessage = 'Registration failed, please check your information and try again'
-  
-  const errorDetail = error.response?.data?.detail
-  
-  if (Array.isArray(errorDetail)) {
-    // 安全地提取消息：确保元素是对象，并有 msg 或 message 属性
-    const messages = errorDetail
-      .map(err => err?.msg ?? err?.message) // 尝试多种可能的字段名
-      .filter(msg => msg != null) // 过滤掉 undefined 或 null
-      
-    if (messages.length > 0) {
-      displayMessage = `Registration failed: ${messages.join('; ')}`
+    console.error('注册失败:', error)
+
+    // 增强的错误处理逻辑
+    let displayMessage = 'Registration failed, please check your information and try again'
+
+    const errorDetail = error.response?.data?.detail
+
+    if (Array.isArray(errorDetail)) {
+      // 安全地提取消息：确保元素是对象，并有 msg 或 message 属性
+      const messages = errorDetail
+        .map(err => err?.msg ?? err?.message) // 尝试多种可能的字段名
+        .filter(msg => msg != null) // 过滤掉 undefined 或 null
+
+      if (messages.length > 0) {
+        displayMessage = `Registration failed: ${messages.join('; ')}`
+      }
+    } else if (typeof errorDetail === 'string') {
+      // 如果 detail 是字符串
+      displayMessage = `Registration failed: ${errorDetail}`
+    } else if (error.response?.data?.message) {
+      // 检查其他常见错误字段
+      displayMessage = `Registration failed: ${error.response.data.message}`
     }
-  } else if (typeof errorDetail === 'string') {
-    // 如果 detail 是字符串
-    displayMessage = `Registration failed: ${errorDetail}`
-  } else if (error.response?.data?.message) {
-    // 检查其他常见错误字段
-    displayMessage = `Registration failed: ${error.response.data.message}`
-  }
-  
-  showToast(displayMessage, 'error')
+
+    showToast(displayMessage, 'error')
   }
 }
 
@@ -457,6 +403,7 @@ watch(() => form.password, () => {
     transform: translateX(100%);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;

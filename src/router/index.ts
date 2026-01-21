@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import Login from '../views/Login.vue'
-import Dashboard from '../views/Dashboard.vue'
+import Login from '../views/LoginView.vue'
+import Dashboard from '../views/DashboardView.vue'
 
 const routes = [
   {
@@ -15,13 +15,13 @@ const routes = [
   {
     path: '/register',
     name: 'Register',
-    component: () => import('../views/Register.vue')
+    component: () => import('../views/RegisterView.vue')
   },
   {
     path: '/dashboard',
     name: 'Dashboard',
     component: Dashboard,
-    // meta: { requiresAuth: true } 
+    // meta: { requiresAuth: true }
   }
 ]
 
@@ -36,14 +36,14 @@ router.beforeEach((to, from, next) => {
   const authRequired = !publicPages.includes(to.path);
   const loggedIn = localStorage.getItem('jwtToken');
 
-  // 重定向到登录页 
+  // 重定向到登录页
   if (authRequired && !loggedIn) {
     next({
       path: '/login',
       query: { redirect: to.fullPath }
     });
   } else {
-    // 已登录时禁止访问登录/注册页 
+    // 已登录时禁止访问登录/注册页
     if (loggedIn && (to.path === '/login' || to.path === '/register')) {
       next('/dashboard');
     } else {
@@ -52,4 +52,4 @@ router.beforeEach((to, from, next) => {
   }
 });
 
-export default router 
+export default router

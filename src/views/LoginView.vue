@@ -22,11 +22,11 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue';
 import AuthInput from '../components/AuthInput.vue';
 import { useRouter } from 'vue-router';
-import http from '../utils/http';
+import http from '../utils/api';
 import qs from 'qs';
 
 const router = useRouter();
