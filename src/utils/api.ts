@@ -1,29 +1,26 @@
 import axios, { AxiosError } from 'axios';
 
+//最外层的Response body
+interface ErrorResponse {
+  detail: FastAPIError[];
+}
 
-// 响应拦截器
-
-// 响应错误定义
+// 响应错误模型定义
 interface FastAPIError {
   loc: string[];
   msg: string;
   type: string;
 }
 
-interface ErrorResponse {
-  detail: FastAPIError[] | string;
-}
-
+// 响应拦截器定义部分
 function formatErrorMessage(detail: FastAPIError[] | string): string {
   if (typeof detail === 'string') {
     return detail;
   }
 
   if (Array.isArray(detail)) {
-    return detail.map((item) => {
-      const loc = item.loc.slice(1).join('.'); // 去掉 "body" 等前缀
-      return `${loc}: ${item.msg}`;
-    }).join('；');
+    console.error('Backend Error:', detail);
+    return detail[0]?.msg || 'Unknown Error';
   }
 
   return 'Response Failed';
@@ -31,11 +28,9 @@ function formatErrorMessage(detail: FastAPIError[] | string): string {
 
 const error_catch = (error: AxiosError<ErrorResponse>) => {
   if (error.response?.data) {
-    const { detail } = error.response.data;
+    const detail  = error.response.data?.detail || 'Unknown Error';
     // 格式化错误信息
     const errorMessage = formatErrorMessage(detail);
-    // 提示报错
-    console.error('API Error:', errorMessage);
     // 替换错误信息
     error.message = errorMessage;
   }
@@ -62,5 +57,10 @@ auth_api.interceptors.response.use(
 //无认证api
 const api = axios.create({baseURL: import.meta.env.VITE_API_BASE || 'http://localhost:9000',});
 
+// 无认证api 响应拦截器
+api.interceptors.response.use(
+  (response) => response,
+  error_catch
+);
 
 export {auth_api, api};

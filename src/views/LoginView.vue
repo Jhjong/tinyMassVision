@@ -26,7 +26,7 @@
 import { ref } from 'vue';
 import AuthInput from '../components/AuthInput.vue';
 import { useRouter } from 'vue-router';
-import http from '../utils/api';
+import { api as http } from '../utils/api';
 import qs from 'qs';
 
 const router = useRouter();

@@ -37,7 +37,7 @@
 
         <!-- 验证码 -->
         <div class="flex gap-2 mt-4">
-          <AuthInput v-model="form.vericode" icon-type="vericode" type="text" required placeholder="verification code"
+          <AuthInput v-model="form.verify_code" icon-type="vericode" type="text" required placeholder="verification code"
             pattern="[0-9]*" :min-length="6" :max-length="6" class="flex-1" @blur="validateField('vericode')" />
           <div class="form-control">
             <button @click="sendVerificationCode" class="btn btn-secondary"
@@ -94,7 +94,7 @@ const form = reactive({
   email: '',
   password: '',
   confirmPassword: '',
-  vericode: ''
+  verify_code: ''
 })
 
 // 验证规则
@@ -151,7 +151,7 @@ const isFormValid = computed(() => {
     form.email &&
     form.password &&
     form.confirmPassword &&
-    form.vericode &&
+    form.verify_code &&
     !errors.username &&
     !errors.email &&
     !errors.password &&
@@ -207,9 +207,9 @@ const validateField = (field: keyof typeof errors) => {
       break
 
     case 'vericode':
-      if (!form.vericode) {
+      if (!form.verify_code) {
         errors.vericode = 'Verification code is required'
-      } else if (!/^\d{6}$/.test(form.vericode)) {
+      } else if (!/^\d{6}$/.test(form.verify_code)) {
         errors.vericode = 'Verification code must be 6 digits'
       } else {
         errors.vericode = ''
@@ -258,7 +258,9 @@ const showToast = (message: string, type = 'success') => {
 
 // 发送验证码
 const sendVerificationCode = async () => {
+
   validateField('email')
+
   if (errors.email || !form.email) {
     showToast('Please enter a valid email address first', 'error')
     return
@@ -273,13 +275,12 @@ const sendVerificationCode = async () => {
     if (response.status === 200) {
       showToast('Verification code has been sent to your email', 'success')
       startCountdown()
-    } else {
-      throw new Error(response.data?.message || 'Failed to send verification code')
     }
+
   } catch (error) {
     if (error instanceof Error) {
       console.error('Failed to send verification code:', error)
-      showToast(error.response?.data?.message || 'Failed to send verification code, please try again', 'error')
+      showToast(error.message || 'Failed to send verification code, please try again', 'error')
     } else {
       console.error('Unknown error:', error)
       showToast('An unknown error occurred, please try again', 'error')
@@ -307,9 +308,11 @@ const startCountdown = () => {
 // 注册函数
 const register = async () => {
   // 验证所有字段
-  Object.keys(form).forEach(key => {
-    if (key in errors) validateField(key)
-  })
+  Object.keys(form).forEach(
+    key => {
+      if (key in errors) validateField(key as keyof typeof errors)
+    }
+  )
 
   // 检查是否有错误
   const hasErrors = Object.values(errors).some(error => error)
@@ -327,53 +330,33 @@ const register = async () => {
   loading.register = true
 
   try {
-    const passwordToSend = form.password
+      // 调用注册接口
+      const response = await usrSignup({
+        username: form.username,
+        email: form.email,
+        password: form.password,
+        verify_code: form.verify_code,
+        identity: null, // must be null
+        active: true // always active
+      })
 
-    // 调用注册接口
-    const response = await usrSignup({
-      username: form.username,
-      email: form.email,
-      password: passwordToSend,
-      vericode: form.vericode
-    })
-
-    if (response.status === 200 || response.status === 201) {
-      showToast('Registration successful! Redirecting to login page...', 'success')
-
-      // 2秒后跳转到登录页
-      setTimeout(() => {
-        router.replace('/login')
-      }, 2000)
-    } else {
-      throw new Error(response.data?.message || 'Registration failed')
-    }
-  } catch (error) {
-    console.error('注册失败:', error)
-
-    // 增强的错误处理逻辑
-    let displayMessage = 'Registration failed, please check your information and try again'
-
-    const errorDetail = error.response?.data?.detail
-
-    if (Array.isArray(errorDetail)) {
-      // 安全地提取消息：确保元素是对象，并有 msg 或 message 属性
-      const messages = errorDetail
-        .map(err => err?.msg ?? err?.message) // 尝试多种可能的字段名
-        .filter(msg => msg != null) // 过滤掉 undefined 或 null
-
-      if (messages.length > 0) {
-        displayMessage = `Registration failed: ${messages.join('; ')}`
+      if (response.status === 200 || response.status === 201) {
+        showToast('Registration successful! Redirecting to login page...', 'success')
+        // 2秒后跳转到登录页
+        setTimeout(() => {router.replace('/login')}, 2000)
+      } else {
+        throw new Error(response.data?.message || 'Registration failed')
       }
-    } else if (typeof errorDetail === 'string') {
-      // 如果 detail 是字符串
-      displayMessage = `Registration failed: ${errorDetail}`
-    } else if (error.response?.data?.message) {
-      // 检查其他常见错误字段
-      displayMessage = `Registration failed: ${error.response.data.message}`
-    }
 
-    showToast(displayMessage, 'error')
-  }
+      } catch (error) { // 注册失败处理
+        if (error instanceof Error) {
+          const errorDetail = error?.message || 'Registration failed, please check your information and try again'
+          showToast(errorDetail, 'error')
+        } else {
+          console.error('Unknown error:', error)
+          showToast('An unknown error occurred, please try again', 'error')
+        }
+      }
 }
 
 // 监听密码变化，实时验证确认密码

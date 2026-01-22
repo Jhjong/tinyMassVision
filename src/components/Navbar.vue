@@ -38,7 +38,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import http from '../utils/api';
+import { auth_api as http } from '../utils/api';
 
 const user = ref(null);
 
