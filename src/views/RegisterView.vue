@@ -1,60 +1,90 @@
 <template>
-  <div class="flex min-h-screen items-center justify-center p-4 sm:p-6 lg:p-8">
-    <div class="card w-full max-w-sm items-center justify-center">
-      <div class="card w-full h-full items-center justify-center p-8">
+    <div class="card max-w-lg w-full flex flex-col gap-6">
         <!-- 用户名输入 -->
-        <AuthInput v-model="form.username" icon-type="user" type="text" required placeholder="username"
-          :pattern="patterns.username" :min-length="3" :max-length="30" title="Only letters, numbers or dash"
-          @blur="validateField('username')" />
-        <p v-if="errors.username" class="validator-hint text-error text-sm mt-1">{{ errors.username }}</p>
-        <p v-else class="validator-hint text-sm mt-1">3-30 characters, letters, numbers, or hyphens</p>
+        <AuthInput
+          v-model="form.username"
+          icon-type="user"
+          type="text"
+          required placeholder="username: only letters, numbers"
+          :pattern="patterns.username"
+          :min-length="3"
+          :max-length="30"
+          title="Only letters, numbers or dash"
+          @blur="validateField('username')"
+        />
 
         <!-- 邮箱输入 -->
-        <AuthInput v-model="form.email" icon-type="email" type="email" required placeholder="email"
-          :pattern="patterns.email" :min-length="3" :max-length="50" @blur="validateField('email')"
-          @input="clearError('email')" />
-        <p v-if="errors.email" class="validator-hint text-error text-sm mt-1">{{ errors.email }}</p>
-        <p v-else class="validator-hint text-sm mt-1">Please enter a valid email address</p>
+        <!-- @input="clearError('email')" />  没起到效果啊-->
+        <AuthInput
+          v-model="form.email"
+          icon-type="email"
+          type="email"
+          required placeholder="mail@site.com"
+          :pattern="patterns.email"
+          :min-length="3"
+          :max-length="50"
+          @blur="validateField('email')"
+          @input="clearError('email')"
+        />
 
         <!-- 密码输入 -->
-        <AuthInput v-model="form.password" icon-type="password" type="password" required placeholder="password"
-          :min-length="8" :max-length="30" @input="validatePasswordStrength" @blur="validateField('password')" />
-        <div class="w-full mt-2">
-          <div class="flex justify-between items-center mb-1">
-            <span class="text-xs">Password strength</span>
-            <span class="text-xs font-medium" :class="strengthClass">{{ strengthText }}</span>
-          </div>
-          <progress class="progress w-full h-2" :class="progressBarClass" :value="passwordScore" max="5"></progress>
-          <p v-if="errors.password" class="validator-hint text-error text-sm mt-1">{{ errors.password }}</p>
-          <p v-else class="validator-hint text-sm mt-1">Minimum 8 characters, must include letters and numbers</p>
-        </div>
+        <AuthInput
+          v-model="form.password"
+          icon-type="password"
+          type="password"
+          required placeholder="password"
+          :min-length="8"
+          :max-length="30"
+          @input="validatePasswordStrength"
+          @blur="validateField('password')"
+        >
+        <progress class="flex progress"
+          :class="progressBarClass"
+          :value="passwordScore" max="5">
+        </progress>
+        </AuthInput>
 
         <!-- 确认密码 -->
-        <AuthInput v-model="form.confirmPassword" icon-type="password" type="password" required
-          placeholder="confirm password" :min-length="8" :max-length="30" @blur="validateField('confirmPassword')"
-          @input="clearError('confirmPassword')" />
-        <p v-if="errors.confirmPassword" class="validator-hint text-error text-sm mt-1">{{ errors.confirmPassword }}</p>
+        <AuthInput
+          v-model="form.confirmPassword"
+          icon-type="password"
+          type="password"
+          required placeholder="confirm password"
+          :min-length="8"
+          :max-length="30"
+          @blur="validateField('confirmPassword')"
+          @input="clearError('confirmPassword')"
+        />
 
         <!-- 验证码 -->
-        <div class="flex gap-2 mt-4">
-          <AuthInput v-model="form.verify_code" icon-type="vericode" type="text" required placeholder="verification code"
-            pattern="[0-9]*" :min-length="6" :max-length="6" class="flex-1" @blur="validateField('vericode')" />
+        <div class="flex w-full gap-6">
+          <AuthInput
+            v-model="form.verify_code"
+            icon-type="vericode"
+            type="text"
+            required placeholder="verification code"
+            pattern="[0-9]*"
+            :min-length="6"
+            :max-length="6"
+            class="flex-1"
+            @blur="validateField('vericode')"
+          />
           <div class="form-control">
             <button @click="sendVerificationCode" class="btn btn-secondary"
               :disabled="isCountdownActive || loading.sendCode"
               :class="{ 'btn-disabled': isCountdownActive || loading.sendCode }">
               <span v-if="loading.sendCode" class="loading loading-spinner loading-xs"></span>
               <span v-else-if="isCountdownActive">Retry in {{ countdown }} seconds</span>
-              <span v-else>Send verification code</span>
+              <span v-else>Send</span>
             </button>
           </div>
         </div>
-        <p v-if="errors.vericode" class="validator-hint text-error text-sm mt-1">{{ errors.vericode }}</p>
-        <p v-else class="validator-hint text-sm mt-1">6-digit verification code</p>
 
         <!-- 注册按钮 -->
         <div class="form-control w-full mt-6">
-          <button class="btn btn-primary w-full" @click="register" :disabled="!isFormValid || loading.register">
+          <button class="btn btn-primary w-full"
+            @click="register"
+            :disabled="!isFormValid || loading.register">
             <span v-if="loading.register" class="loading loading-spinner loading-sm"></span>
             <span v-else>Sign Up</span>
           </button>
@@ -67,17 +97,15 @@
             Sign in now
           </router-link>
         </div>
-      </div>
-    </div>
+    </div> <!-- Card 结尾 -->
 
     <!-- DaisyUI Toast 提示 -->
     <div v-if="toast.show" class="toast toast-top toast-end z-50">
       <div :class="['alert', toast.type === 'success' ? 'alert-success' : 'alert-error']">
         <span>{{ toast.message }}</span>
-        <button class="btn btn-ghost btn-xs" @click="toast.show = false">×</button>
+        <button class="btn btn-ghost btn-xs" @click="toast.show = false">x</button>
       </div>
     </div>
-  </div>
 </template>
 
 <script setup lang="ts">
@@ -165,10 +193,11 @@ const isFormValid = computed(() => {
 const validateField = (field: keyof typeof errors) => {
   switch (field) {
     case 'username':
+      console.error(errors.username+' ')
       if (!form.username) {
         errors.username = 'Username is required'
       } else if (!new RegExp(patterns.username).test(form.username)) {
-        errors.username = 'Username must be 3-30 characters, letters, numbers, underscores or hyphens only'
+        errors.username = 'Username is invalid'
       } else {
         errors.username = ''
       }
@@ -182,6 +211,7 @@ const validateField = (field: keyof typeof errors) => {
       } else {
         errors.email = ''
       }
+      console.error(errors.email)
       break
 
     case 'password':

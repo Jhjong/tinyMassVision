@@ -1,9 +1,10 @@
-<script setup>
+<script setup lang="ts">
 import SvgIcon from './SvgIcon.vue';
+import { computed } from 'vue';
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:modelValue', 'blur']);
 
-defineProps({
+const props = defineProps({
     modelValue: { type: String, default: '' },
     type: { type: String, default: 'text' },
     iconType: { type: String, required: true },
@@ -14,13 +15,27 @@ defineProps({
     maxLength: { type: Number, default: 100 },
     title: { type: String, default: '' }
 });
+
+const value = computed({
+    get: () => props.modelValue,
+    set: (val) => emit('update:modelValue', val)
+});
 </script>
 
 <template>
-    <label class="input validator">
+    <label class="input validator w-full">
         <SvgIcon :type="iconType" />
-        <input :value="modelValue" @input="emit('update:modelValue', $event.target.value)" :type="type"
-            :required="required" :placeholder="placeholder" :pattern="pattern" :minlength="minLength"
-            :maxlength="maxLength" :title="title" />
+        <!-- v model 双向绑定 -->
+        <input
+            v-model="value"
+            :type="type"
+            :required="required"
+            :placeholder="placeholder"
+            :pattern="pattern"
+            :minlength="minLength"
+            :maxlength="maxLength"
+            :title="title"
+            @blur="emit('blur')" />
     </label>
+    <slot />
 </template>
