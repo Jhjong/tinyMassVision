@@ -10,7 +10,7 @@
         </div>
         <ul tabindex="0" class="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow">
           <li v-if="!user"><router-link to="/login">Login</router-link></li>
-          <li><router-link to="/dashboard">BionetServer</router-link></li>
+          <li><router-link to="/dashboard">MassVision</router-link></li>
           <!-- <li><router-link to="/update">UpdateUser</router-link></li> -->
         </ul>
       </div>
@@ -18,7 +18,7 @@
 
     <!-- center -->
     <div class="navbar-center">
-      <router-link to="/" class="btn btn-ghost text-xl">BionetServer</router-link>
+      <router-link to="/" class="btn btn-ghost text-xl">MassVision</router-link>
     </div>
 
     <!-- end -->
@@ -31,7 +31,7 @@
         </div>
         <span class="ml-2 font-medium">{{ user.username }}</span>
       </div>
-      <input type="checkbox" value="fantasy" class="toggle theme-controller" />
+      <input type="checkbox" value="dark" class="toggle theme-controller" />
     </div>
   </div>
 </template>

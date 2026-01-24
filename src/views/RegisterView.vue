@@ -5,12 +5,13 @@
           v-model="form.username"
           icon-type="user"
           type="text"
-          required placeholder="username: only letters, numbers"
+          required placeholder="username"
           :pattern="patterns.username"
           :min-length="3"
           :max-length="30"
-          title="Only letters, numbers or dash"
+          :error="errors.username"
           @blur="validateField('username')"
+          @focus="clearError('username')"
         />
 
         <!-- 邮箱输入 -->
@@ -23,8 +24,9 @@
           :pattern="patterns.email"
           :min-length="3"
           :max-length="50"
+          :error="errors.email"
           @blur="validateField('email')"
-          @input="clearError('email')"
+          @focus="clearError('email')"
         />
 
         <!-- 密码输入 -->
@@ -34,50 +36,55 @@
           type="password"
           required placeholder="password"
           :min-length="8"
-          :max-length="30"
+          :max-length="25"
+          :error="errors.password"
           @input="validatePasswordStrength"
+          @focus="clearError('password')"
           @blur="validateField('password')"
         >
-        <progress class="flex progress"
-          :class="progressBarClass"
-          :value="passwordScore" max="5">
-        </progress>
+        <progress :value="passwordScore" class="flex progress" :class="progressBarClass" max="5" />
         </AuthInput>
 
         <!-- 确认密码 -->
         <AuthInput
-          v-model="form.confirmPassword"
+          v-model="form.confirm_password"
           icon-type="password"
           type="password"
           required placeholder="confirm password"
           :min-length="8"
-          :max-length="30"
-          @blur="validateField('confirmPassword')"
-          @input="clearError('confirmPassword')"
+          :max-length="25"
+          :error="errors.confirm_password"
+          @blur="validateField('confirm_password')"
+          @focus="clearError('confirm_password')"
         />
 
         <!-- 验证码 -->
-        <div class="flex w-full gap-6">
-          <AuthInput
-            v-model="form.verify_code"
-            icon-type="vericode"
-            type="text"
-            required placeholder="verification code"
-            pattern="[0-9]*"
-            :min-length="6"
-            :max-length="6"
-            class="flex-1"
-            @blur="validateField('vericode')"
-          />
-          <div class="form-control">
-            <button @click="sendVerificationCode" class="btn btn-secondary"
+        <div class="flex w-full ">
+          <div class="form-control flex-5 mr-10">
+            <AuthInput
+              v-model="form.verify_code"
+              icon-type="verify_code"
+              type="text"
+              required placeholder="verification code"
+              :pattern="patterns.verify_code"
+              :min-length="6"
+              :max-length="7"
+              :error="errors.verify_code"
+              @blur="validateField('verify_code')"
+              @focus="clearError('verify_code')"
+            />
+          </div>
+          <div class="form-control ml-auto">
+            <button
+              @click="sendVerificationCode"
+              class="btn btn-secondary flex-1"
               :disabled="isCountdownActive || loading.sendCode"
               :class="{ 'btn-disabled': isCountdownActive || loading.sendCode }">
               <span v-if="loading.sendCode" class="loading loading-spinner loading-xs"></span>
-              <span v-else-if="isCountdownActive">Retry in {{ countdown }} seconds</span>
+              <span v-else-if="isCountdownActive"> {{ countdown }}s</span>
               <span v-else>Send</span>
             </button>
-          </div>
+          </div><!-- 固定宽度 -->
         </div>
 
         <!-- 注册按钮 -->
@@ -106,6 +113,7 @@
         <button class="btn btn-ghost btn-xs" @click="toast.show = false">x</button>
       </div>
     </div>
+
 </template>
 
 <script setup lang="ts">
@@ -115,20 +123,21 @@ import AuthInput from '../components/AuthInput.vue'
 import { usrSignup, sendEmailCode } from '@/utils/usr-api'
 
 const router = useRouter()
-
 // 表单数据
 const form = reactive({
   username: '',
   email: '',
   password: '',
-  confirmPassword: '',
+  confirm_password: '',
   verify_code: ''
 })
 
 // 验证规则
 const patterns = {
   username: '^[a-zA-Z0-9_-]{3,30}$',
-  email: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$'
+  email: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$',
+  password: '^(?=.*[a-zA-Z])(?=.*\\d).{8,25}$',
+  verify_code: '^[0-9]{6}$'
 }
 
 // 错误信息
@@ -136,8 +145,8 @@ const errors = reactive({
   username: '',
   email: '',
   password: '',
-  confirmPassword: '',
-  vericode: ''
+  confirm_password: '',
+  verify_code: ''
 })
 
 // 加载状态
@@ -159,14 +168,7 @@ const toast = reactive({
 
 // 密码强度
 const passwordScore = ref(0)
-const strengthText = computed(() => {
-  const texts = ['Very weak', 'Weak', 'Fair', 'Strong', 'Very strong']
-  return texts[passwordScore.value - 1] || 'Very weak'
-})
-const strengthClass = computed(() => {
-  const classes = ['text-error', 'text-warning', 'text-warning', 'text-success', 'text-success']
-  return classes[passwordScore.value - 1] || 'text-error'
-})
+
 const progressBarClass = computed(() => {
   const classes = ['progress-error', 'progress-warning', 'progress-warning', 'progress-success', 'progress-success']
   return classes[passwordScore.value - 1] || 'progress-error'
@@ -178,14 +180,14 @@ const isFormValid = computed(() => {
     form.username &&
     form.email &&
     form.password &&
-    form.confirmPassword &&
+    form.confirm_password &&
     form.verify_code &&
     !errors.username &&
     !errors.email &&
     !errors.password &&
-    !errors.confirmPassword &&
-    !errors.vericode &&
-    form.password === form.confirmPassword
+    !errors.confirm_password &&
+    !errors.verify_code &&
+    form.password === form.confirm_password
   )
 })
 
@@ -193,12 +195,15 @@ const isFormValid = computed(() => {
 const validateField = (field: keyof typeof errors) => {
   switch (field) {
     case 'username':
-      console.error(errors.username+' ')
       if (!form.username) {
         errors.username = 'Username is required'
-      } else if (!new RegExp(patterns.username).test(form.username)) {
-        errors.username = 'Username is invalid'
-      } else {
+      }
+      else if (!new RegExp(patterns.username).test(form.username)) {
+        errors.username = `Username is invalid:
+                          * must be 3-30 characters long
+                          * contain only letters, numbers, dash`
+      }
+      else {
         errors.username = ''
       }
       break
@@ -206,9 +211,12 @@ const validateField = (field: keyof typeof errors) => {
     case 'email':
       if (!form.email) {
         errors.email = 'Email address is required'
-      } else if (!new RegExp(patterns.email).test(form.email)) {
-        errors.email = 'Please enter a valid email address (e.g., example@domain.com)'
-      } else {
+      }
+      else if (!new RegExp(patterns.email).test(form.email)) {
+        errors.email = `Please enter a valid email address
+                        (e.g., example@domain.com)`
+      }
+      else {
         errors.email = ''
       }
       console.error(errors.email)
@@ -217,32 +225,33 @@ const validateField = (field: keyof typeof errors) => {
     case 'password':
       if (!form.password) {
         errors.password = 'Password is required'
-      } else if (form.password.length < 8) {
-        errors.password = 'Password must be at least 8 characters long'
-      } else if (!/(?=.*[a-zA-Z])(?=.*\d)/.test(form.password)) {
-        errors.password = 'Password must contain both letters and numbers'
+      }
+      else if (!new RegExp(patterns.password).test(form.password)) {
+        errors.password = `Password is invalid:
+                          * must be 8-25 characters long
+                          * contain both letters and numbers`
       } else {
         errors.password = ''
       }
       break
 
-    case 'confirmPassword':
-      if (!form.confirmPassword) {
-        errors.confirmPassword = 'Please confirm your password'
-      } else if (form.password !== form.confirmPassword) {
-        errors.confirmPassword = 'Passwords do not match'
+    case 'confirm_password':
+      if (!form.confirm_password) {
+        errors.confirm_password = 'Please confirm your password'
+      } else if (form.password !== form.confirm_password) {
+        errors.confirm_password = 'Passwords do not match'
       } else {
-        errors.confirmPassword = ''
+        errors.confirm_password = ''
       }
       break
 
-    case 'vericode':
+    case 'verify_code':
       if (!form.verify_code) {
-        errors.vericode = 'Verification code is required'
-      } else if (!/^\d{6}$/.test(form.verify_code)) {
-        errors.vericode = 'Verification code must be 6 digits'
+        errors.verify_code = 'Verification code is required'
+      } else if (!new RegExp(patterns.verify_code).test(form.verify_code)) {
+        errors.verify_code = 'Verification code must be 6 digits'
       } else {
-        errors.vericode = ''
+        errors.verify_code = ''
       }
       break
   }
@@ -262,7 +271,6 @@ const validatePasswordStrength = () => {
     passwordScore.value = 0
     return
   }
-
   // 长度得分
   if (password.length >= 8) score++
   if (password.length >= 12) score++
@@ -352,7 +360,7 @@ const register = async () => {
   }
 
   // 检查密码一致性
-  if (form.password !== form.confirmPassword) {
+  if (form.password !== form.confirm_password) {
     showToast('Passwords do not match', 'error')
     return
   }
@@ -391,18 +399,13 @@ const register = async () => {
 
 // 监听密码变化，实时验证确认密码
 watch(() => form.password, () => {
-  if (form.confirmPassword) {
-    validateField('confirmPassword')
+  if (form.confirm_password) {
+    validateField('confirm_password')
   }
 })
 </script>
 
 <style scoped>
-.validator-hint {
-  margin-top: 4px;
-  margin-bottom: 8px;
-}
-
 .progress {
   transition: all 0.3s ease;
 }
