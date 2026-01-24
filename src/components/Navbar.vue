@@ -38,7 +38,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import http from '../utils/http';
+import { auth_api as http } from '../utils/api';
 
 const user = ref(null);
 
@@ -50,7 +50,7 @@ const getUser = async () => {
   try {
     const token = localStorage.getItem('jwtToken');
     if (!token) return;
-    
+
     // Assuming /user endpoint exists as per original code
     const response = await http.get('/user');
     user.value = response.data;
