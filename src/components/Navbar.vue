@@ -9,61 +9,78 @@
           </svg>
         </div>
         <ul tabindex="0" class="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow">
-          <li v-if="!user"><router-link to="/login">Login</router-link></li>
-          <li><router-link to="/dashboard">BionetServer</router-link></li>
-          <!-- <li><router-link to="/update">UpdateUser</router-link></li> -->
+          <!-- 未登录时显示登录链接 -->
+          <li v-if="!userStore.isAuthenticated">
+            <router-link to="/login">Login</router-link>
+          </li>
+          
+          <!-- 通用链接 -->
+          <li><router-link to="/dashboard">Dashboard</router-link></li>
+          
+          <!-- 已登录时显示登出选项 -->
+          <li v-if="userStore.isAuthenticated">
+            <a @click="handleLogout" class="text-error hover:text-error">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              Logout
+            </a>
+          </li>
         </ul>
       </div>
     </div>
 
     <!-- center -->
     <div class="navbar-center">
-      <router-link to="/" class="btn btn-ghost text-xl">BionetServer</router-link>
+      <router-link to="/" class="btn btn-ghost text-xl">MassVision</router-link>
     </div>
 
     <!-- end -->
-    <div class="navbar-end space-x-4">
-      <div v-if="user" class="flex items-center">
+    <div class="navbar-end gap-4">
+      <div v-if="userStore.isAuthenticated" class="flex items-center gap-2">
         <div class="avatar placeholder">
           <div class="bg-neutral text-neutral-content rounded-full w-8">
-            <span class="text-xs">{{ userInitial }}</span>
+            <span class="text-xs">{{ userStore.userInitial }}</span>
           </div>
         </div>
-        <span class="ml-2 font-medium">{{ user.username }}</span>
+        <span class="font-medium hidden sm:inline">{{ userStore.user?.username }}</span>
       </div>
-      <input type="checkbox" value="fantasy" class="toggle theme-controller" />
+      <input type="checkbox" value="dark" class="toggle theme-controller" />
     </div>
   </div>
 </template>
 
-<script setup>
-import { ref, computed, onMounted } from 'vue';
-import http from '../utils/http';
+<script setup lang="ts">
+import { useUserStore } from '@/stores/user'
+import { useRouter } from 'vue-router'
+import { onMounted } from 'vue'
 
-const user = ref(null);
+const userStore = useUserStore()
+const router = useRouter()
 
-const userInitial = computed(() => {
-  return user.value?.username?.charAt(0).toUpperCase();
-});
-
-const getUser = async () => {
-  try {
-    const token = localStorage.getItem('jwtToken');
-    if (!token) return;
+// 登出处理
+const handleLogout = () => {
+  console.log('Logout requested by user')
+  if (confirm('Are you sure you want to logout?')) {
+    console.log('User confirmed logout')
+    console.log('Before logout - Token exists:', !!localStorage.getItem('jwtToken'))
+    console.log('Before logout - User store:', userStore.user)
     
-    // Assuming /user endpoint exists as per original code
-    const response = await http.get('/user');
-    user.value = response.data;
-  } catch (error) {
-    console.error('Failed to get user information:', error);
-    // If 401, maybe clear token?
-    if (error.response && error.response.status === 401) {
-       localStorage.removeItem('jwtToken');
-    }
+    userStore.logout()
+    
+    console.log('After logout - Token exists:', !!localStorage.getItem('jwtToken'))
+    console.log('After logout - User store:', userStore.user)
+    console.log('Redirecting to login page')
+    
+    router.push('/login')
+  } else {
+    console.log('Logout cancelled by user')
   }
-};
+}
 
 onMounted(() => {
-  getUser();
-});
+  console.log('Navbar mounted, restoring user from localStorage')
+  userStore.restoreUser()
+  console.log('User restored:', userStore.user)
+})
 </script>

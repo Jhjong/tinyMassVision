@@ -3,7 +3,7 @@ defineProps({
   type: {
     type: String,
     required: true,
-    validator: (v) => ['user', 'password', 'email', 'viricode'].includes(v),
+    validator: (v) => ['user', 'password', 'email', 'verify_code'].includes(v),
   },
 })
 </script>
@@ -37,8 +37,8 @@ defineProps({
         <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
       </template>
 
-      <!-- VericodeIcon -->
-      <template v-if="type === 'vericode'">
+      <!-- verify_codeIcon -->
+      <template v-if="type === 'verify_code'">
         <rect x="3" y="8" width="18" height="12" rx="2"></rect>
         <path d="M7 12h10"></path>
         <path d="M7 16h6"></path>
